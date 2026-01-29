@@ -1,7 +1,7 @@
 {
   "name": "Akshay ToDo List",
   "short_name": "ToDoList",
-  "description": "A simple, modern to-do list app with notifications",
+  "description": "A simple, modern to-do list app",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
