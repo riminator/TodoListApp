@@ -34,37 +34,33 @@ function formatDate(dateStr) {
     });
 }
 
-const TEST_MODE = true; // set to true to always fire notifications for testing
-
 function checkNotifications() {
     const now = new Date();
-    console.log("Checking notifications at", now.toLocaleTimeString());
+    console.log("=== Checking notifications at", now.toLocaleTimeString(), "===");
 
     tasks.forEach(task => {
-        console.log("Task:", task.text, "Deadline:", task.deadline, "Time:", task.time, "Notified:", task.notified);
-        if (!task.deadline || !task.time || (!TEST_MODE && task.notified)) {
-            console.log("Skipping task:", task.text);
+        if (!task.deadline || !task.time) {
+            console.log("Skipping task (missing date/time):", task.text);
             return;
         }
-
 
         const [year, month, day] = task.deadline.split("-");
         const [hour, minute] = task.time.split(":");
         const taskTime = new Date(year, month - 1, day, hour, minute);
 
-        console.log("Parsed taskTime:", taskTime.toLocaleString());
-
-        if (now >= taskTime && !task.completed) {
+        // Only check if task is not completed
+        if (!task.completed && now >= taskTime) {
             console.log("Firing notification for:", task.text);
-            new Notification("⏰ Task Reminder", { body: task.text });
-            task.notified = true;
-            saveTasks();
+
+            // Add timestamp to body so Chrome treats it as new
+            new Notification("Task Reminder", {
+                body: `${task.text} — ${now.toLocaleTimeString()}`
+            });
         } else {
             console.log("Not time yet for:", task.text);
         }
     });
 }
-
 
 
 function renderTasks() {
