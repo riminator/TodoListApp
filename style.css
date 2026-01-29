@@ -209,3 +209,12 @@ li.completed {
         font-size: 14px;
     }
 }
+
+.task-form input[type="date"],
+.task-form input[type="time"],
+.task-form select {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}

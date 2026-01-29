@@ -1,9 +1,15 @@
 const taskInput = document.getElementById('task-input');
+const timeInput = document.getElementById("time-input");
 const categoryInput = document.getElementById('category-input');
 const deadlineInput = document.getElementById('deadline-input');
 const priorityInput = document.getElementById('priority-input');
 const addTaskBtn = document.getElementById('add-task-btn');
 const taskList = document.getElementById('task-list');
+
+// Request notification permission
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
 
 let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
@@ -11,8 +17,60 @@ function saveTasks() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
+function formatTime(time) {
+    if (!time) return '';
+    const [h, m] = time.split(':');
+    const d = new Date();
+    d.setHours(h, m);
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+
+function checkNotifications() {
+    const now = new Date();
+
+    tasks.forEach(task => {
+        if (!task.deadline || !task.time || task.notified) return;
+
+        const taskTime = new Date(`${task.deadline} ${task.time}`);
+
+        if (now >= taskTime && now - taskTime < 60000 && !task.completed) {
+            new Notification("⏰ Task Reminder", {
+                body: task.text
+            });
+
+            task.notified = true;
+            saveTasks();
+        }
+    });
+}
+
+
 function renderTasks() {
-    taskList.innerHTML = '';
+    taskList.innerHTML = `
+        <h3>Today</h3>
+        <ul id="today"></ul>
+        <h3>Upcoming</h3>
+        <ul id="upcoming"></ul>
+        <h3>Overdue</h3>
+        <ul id="overdue"></ul>
+    `;
+
+
+    tasks.sort((a, b) => {
+        const aDate = new Date(`${a.deadline || '9999-12-31'} ${a.time || '23:59'}`);
+        const bDate = new Date(`${b.deadline || '9999-12-31'} ${b.time || '23:59'}`);
+        return aDate - bDate;
+    });
+
+
     tasks.forEach((task, index) => {
         const li = document.createElement('li');
 
@@ -24,7 +82,13 @@ function renderTasks() {
 
         const textDiv = document.createElement('div');
         textDiv.className = 'task-text';
-        textDiv.textContent = task.text + (task.deadline ? ` - ${task.deadline}` : '');
+        let meta = [];
+
+        if (task.deadline) meta.push(formatDate(task.deadline));
+        if (task.time) meta.push(formatTime(task.time));
+
+        textDiv.textContent = task.text + (meta.length ? ` — ${meta.join(' ')}` : '');
+
         textDiv.addEventListener('click', () => {
             task.completed = !task.completed;
             saveTasks();
@@ -88,7 +152,22 @@ function renderTasks() {
         actions.appendChild(delBtn);
 
         li.appendChild(actions);
-        taskList.appendChild(li);
+        
+        const now = new Date();
+        const taskDate = new Date(`${task.deadline || ''} ${task.time || ''}`);
+
+        let section = document.getElementById("upcoming");
+
+        if (task.deadline) {
+            if (taskDate.toDateString() === now.toDateString()) {
+                section = document.getElementById("today");
+            } else if (taskDate < now && !task.completed) {
+                section = document.getElementById("overdue");
+            }
+        }
+
+        section.appendChild(li);
+
     });
 }
 
@@ -101,14 +180,18 @@ addTaskBtn.addEventListener('click', () => {
         text,
         category: categoryInput.value,
         deadline: deadlineInput.value,
+        time: timeInput.value,
         priority: priorityInput.value,
-        completed: false
+        completed: false,
+        notified: false
     });
+
 
     saveTasks();
     renderTasks();
     taskInput.value = '';
     deadlineInput.value = '';
+    timeInput.value = '';
 });
 
 // Add task on Enter
@@ -118,3 +201,6 @@ taskInput.addEventListener('keypress', e => {
 
 // Initial render
 renderTasks();
+
+setInterval(checkNotifications, 60000); // check every minute
+
