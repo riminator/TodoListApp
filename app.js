@@ -42,10 +42,11 @@ function checkNotifications() {
 
     tasks.forEach(task => {
         console.log("Task:", task.text, "Deadline:", task.deadline, "Time:", task.time, "Notified:", task.notified);
-        if (!task.deadline || !task.time || task.notified) {
+        if (!task.deadline || !task.time || (!TEST_MODE && task.notified)) {
             console.log("Skipping task:", task.text);
             return;
         }
+
 
         const [year, month, day] = task.deadline.split("-");
         const [hour, minute] = task.time.split(":");
