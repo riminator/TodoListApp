@@ -13,6 +13,8 @@ if ("Notification" in window) {
 
 let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
+tasks = tasks.map(task => ({ ...task, notified: task.notified || false }));
+
 function saveTasks() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
@@ -32,25 +34,36 @@ function formatDate(dateStr) {
     });
 }
 
+const TEST_MODE = true; // set to true to always fire notifications for testing
 
 function checkNotifications() {
     const now = new Date();
+    console.log("Checking notifications at", now.toLocaleTimeString());
 
     tasks.forEach(task => {
-        if (!task.deadline || !task.time || task.notified) return;
+        console.log("Task:", task.text, "Deadline:", task.deadline, "Time:", task.time, "Notified:", task.notified);
+        if (!task.deadline || !task.time || task.notified) {
+            console.log("Skipping task:", task.text);
+            return;
+        }
 
-        const taskTime = new Date(`${task.deadline} ${task.time}`);
+        const [year, month, day] = task.deadline.split("-");
+        const [hour, minute] = task.time.split(":");
+        const taskTime = new Date(year, month - 1, day, hour, minute);
 
-        if (now >= taskTime && now - taskTime < 60000 && !task.completed) {
-            new Notification("⏰ Task Reminder", {
-                body: task.text
-            });
+        console.log("Parsed taskTime:", taskTime.toLocaleString());
 
+        if (now >= taskTime && !task.completed) {
+            console.log("Firing notification for:", task.text);
+            new Notification("⏰ Task Reminder", { body: task.text });
             task.notified = true;
             saveTasks();
+        } else {
+            console.log("Not time yet for:", task.text);
         }
     });
 }
+
 
 
 function renderTasks() {
@@ -154,7 +167,10 @@ function renderTasks() {
         li.appendChild(actions);
         
         const now = new Date();
-        const taskDate = new Date(`${task.deadline || ''} ${task.time || ''}`);
+        const [year, month, day] = (task.deadline || "9999-12-31").split("-");
+        const [hour, minute] = (task.time || "23:59").split(":");
+        const taskDate = new Date(year, month - 1, day, hour, minute);
+
 
         let section = document.getElementById("upcoming");
 
@@ -202,5 +218,5 @@ taskInput.addEventListener('keypress', e => {
 // Initial render
 renderTasks();
 
-setInterval(checkNotifications, 60000); // check every minute
+setInterval(checkNotifications, 5000); // check every minute
 
