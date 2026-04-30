@@ -1,0 +1,9 @@
+k read '/Users/aviagrawal/CP/projects/COE311K/Final Project/Mallireddy_Ramaakshay_COE311K_FinalProject.ipynb' and  
+  check if there are any errors by what the PDFS say. also remove like unecessary functions that are repeated and      
+  remove all unncessary things because we need to shorten this down. also add this function because it says not        
+  defined                                                                                                              
+                                                                                                                       
+  def adaptive_implicit_euler_rk2(y0, t0, t_final, h0, tol,\n",                                                        
+      "                                 h_min=1e-6, h_max=1.0, safety=0.9,\n",                                         
+      "                                 max_steps=100_000):\n                                                        
+           
